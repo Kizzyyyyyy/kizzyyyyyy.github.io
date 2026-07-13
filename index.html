@@ -1,9 +1,8 @@
-
 <script>
         // HIER DEINE RENDER-URL MIT HTTPS:// EINTRAGEN
         const BACKEND_URL = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
             ? "http://localhost:5000"
-            : "https://onrender.com"; // <-- Ersetze diesen Link mit deiner Render-URL!
+            : "https://kizzyyyyyy-github-io.onrender.com"; // <-- Ersetze diesen Link mit deiner Render-URL!
 
         const myToken = localStorage.getItem('chat_token') || 'token_' + Math.random().toString(36).substr(2, 9);
         localStorage.setItem('chat_token', myToken);
@@ -155,3 +154,4 @@
             }, 3000);
         }
     </script>
+
