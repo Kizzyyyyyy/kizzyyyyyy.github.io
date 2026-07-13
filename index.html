@@ -151,266 +151,93 @@
         .msg { max-width: 60%; padding: 10px 14px; border-radius: 12px; font-size: 14px; line-height: 1.4; word-break: break-word; align-self: flex-start; background: var(--bg-panel-alt); color: var(--text-primary); }
         .msg.me { align-self: flex-end; background: linear-gradient(135deg, #005f3e 0%, #004d32 100%); color: var(--accent-mint); border: 1px solid rgba(0, 255, 170, 0.15); }
  
-        .message-bar { flex-shrink: 0; padding: 16px 22px; border-top: 1px solid var(--border); display: flex; gap: 10px; }
-        .message-bar textarea {
-            flex: 1; resize: none; height: 46px; background: var(--bg-input); border: 1px solid var(--border); border-radius: 10px;
-            color: #fff; padding: 12px 14px; font-size: 14px;
-        }
-        .message-bar textarea:focus { outline: none; border-color: var(--accent-mint); box-shadow: 0 0 10px rgba(0, 255, 170, 0.15); }
-        .message-bar button {
-            padding: 0 22px; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; font-size: 14px;
-            background: linear-gradient(90deg, var(--accent-mint), #00e577); color: #0f0c20;
-        }
- 
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
- 
-        @media (max-width: 720px) {
-            .sidebar { width: 100%; position: absolute; inset: 0; z-index: 5; }
-            .sidebar.hidden-mobile { display: none; }
-            .main-panel.hidden-mobile { display: none; }
-            .app-grid { position: relative; }
-        }
+        .message-bar { flex-shrink: 0; padding: 15px 24px; background: var(--bg-panel); border-top: 1px solid var(--border); display: flex; gap: 12px; }
+        .message-bar input { flex: 1; background: var(--bg-input); border: 1px solid var(--border); border-radius: 8px; color: #fff; padding: 12px 16px; font-size: 14px; }
+        .message-bar input:focus { outline: none; border-color: var(--accent-mint); }
+        .message-bar button { padding: 0 20px; border: none; border-radius: 8px; background: var(--accent-mint); color: #0b0917; font-weight: bold; cursor: pointer; }
     </style>
 </head>
 <body>
- 
-<div id="loginScreen">
-    <div class="login-card">
-        <h1>Crypto-Box</h1>
-        <div class="subtitle">Absolut anonymer Peer-to-Peer Chat. Alle Daten löschen sich nach 24h.</div>
-        <label>Erstelle deine 12-stellige ID</label>
-        <input type="text" id="myIdInput" maxlength="12" placeholder="938402841029">
-        <button class="btn-primary" onclick="registerMyId()">Chat-Raum betreten</button>
-        <div id="loginStatus" class="login-status"></div>
-    </div>
-</div>
- 
-<div id="appShell">
-    <div class="app-grid">
-        <div class="sidebar" id="sidebar">
-            <div class="sidebar-me">
-                <div class="label">Deine ID</div>
-                <div class="id-chip" id="myUsername">------------</div>
-            </div>
- 
-            <div class="add-friend-block">
-                <div class="label">Freund hinzufügen</div>
-                <div class="add-friend-row">
-                    <input type="text" id="friendInput" maxlength="12" placeholder="12-stellige ID...">
-                    <button onclick="addFriend()">+</button>
-                </div>
-                <div id="friendAddStatus"></div>
-            </div>
- 
-            <div class="friend-list-label">Aktive Verbindungen</div>
-            <div id="friendList">
-                <div class="empty-friends">Noch keine Freunde verbunden.</div>
-            </div>
-        </div>
- 
-        <div class="main-panel" id="mainPanel">
-            <div id="chatHeader" class="chat-header" style="display:none;">
-                <div class="avatar" id="chatHeaderAvatar"></div>
-                <div class="fid" id="chatWithTitle"></div>
-                <div class="hint">Aktualisiert automatisch</div>
-            </div>
- 
-            <div id="emptyState" class="empty-state">
-                <div class="glyph">＋</div>
-                <p>Wähle links einen Freund aus, um euren verschlüsselten Chat zu öffnen.</p>
-            </div>
- 
-            <div id="chatSection" style="display:none; flex-direction: column; flex: 1; min-height: 0;">
-                <div id="chatBox"></div>
-                <div class="message-bar">
-                    <textarea id="msgInput" placeholder="Sichere Nachricht schreiben..."></textarea>
-                    <button onclick="sendMessage()">Senden</button>
-                </div>
-            </div>
+
+    <!-- Login Bildschirm -->
+    <div id="loginScreen">
+        <div class="login-card">
+            <h1>Crypto-Box</h1>
+            <p class="subtitle">Absolut anonymer Peer-to-Peer Chat.</p>
+            <label>Deine 12-stellige ID</label>
+            <input type="text" id="userIdInput" placeholder="LADEND...">
+            <button class="btn-primary" id="loginBtn">Chat-Raum betreten</button>
+            <div class="login-status" id="loginStatus">Verbindung zum Server wird aufgebaut...</div>
         </div>
     </div>
-</div>
- 
-<script>
-    let myToken = localStorage.getItem('chat_session_token');
-    if (!myToken) {
-        myToken = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-            var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
-            return v.toString(16);
+
+    <!-- Haupt-Anwendung -->
+    <div id="appShell">
+        <div class="app-grid">
+            <div class="sidebar">
+                <div class="sidebar-me">
+                    <div class="label">Deine ID</div>
+                    <div class="id-chip" id="myIdDisplay">--------</div>
+                </div>
+                <div class="add-friend-block">
+                    <div class="label">Freund hinzufügen</div>
+                    <div class="add-friend-row">
+                        <input type="text" id="friendIdInput" placeholder="12-stellige ID">
+                        <button id="addFriendBtn">+</button>
+                    </div>
+                    <div id="friendAddStatus"></div>
+                </div>Aktive Verbindungen
+                Noch keine Freunde verbunden.
+
+                F
+                Freund
+                Ende-zu-Ende verschlüsselt
+
+                ＋
+                Wähle links einen Freund aus, um euren verschlüsselten Chat zu öffnen.
+
+                Senden
+
+                const BACKEND_URL = window.location.hostname === "localhost" || 
+                window.location.hostname === "127.0.0.1"
+                ? "ws://localhost:5000":
+                "wss://onrender.com"; 
+
+                let socket;
+
+                function connectToServer() {
+                    const statusDiv = document.getElementById('loginStatus');
+
+                    // Verbindung aufbauen
+                    socket = new WebSocket(BACKEND_URL);
+
+                    socket.onopen = () => {
+                    console.log("Verbunden mit Server:", BACKEND_URL);
+                    statusDiv.innerText = "Bereit! Klicke auf 'Chat-Raum betreten'.";
+                    statusDiv.style.color = "var(--accent-mint)";
+                    // Hier kannst du automatisch eine ID vom Server anfordern, falls dein Server das macht
+                };
+
+                socket.onerror = (error) => {
+                    console.error("WebSocket Fehler:", error);
+                    statusDiv.innerText = "Fehler: Server nicht erreichbar. Versuche es gleich nochmal.";
+                    statusDiv.style.color = "var(--danger)";
+                };
+
+                socket.onclose = () => {
+                console.log("Verbindung geschlossen.");
+            };
+        }
+
+        window.addEventListener('DOMContentLoaded', connectToServer);
+
+
+        // Einfacher Login-Umschalter für das Interface
+        document.getElementById('loginBtn').addEventListener('click', () => {
+        document.getElementById('loginScreen').style.display = 'none';
+        document.getElementById('appShell').style.display = 'block';
+        // ID übertragen
+        const inputId = document.getElementById('userIdInput').value || "User-" + 
+        Math.floor(Math.random()*1000);
+        document.getElementById('myIdDisplay').innerText = inputId;
         });
-        localStorage.setItem('chat_session_token', myToken);
-    }
- 
-    let activeChatFriend = null;
-    let loopInterval = null;
- 
-    // deterministic color "fingerprint" per ID, fits the anonymous/crypto theme
-    function idToGradient(id) {
-        let hash = 0;
-        for (let i = 0; i < id.length; i++) hash = (hash * 31 + id.charCodeAt(i)) >>> 0;
-        const hueA = hash % 360;
-        const hueB = (hueA + 55) % 360;
-        return `linear-gradient(135deg, hsl(${hueA},70%,55%), hsl(${hueB},70%,45%))`;
-    }
- 
-    async function registerMyId() {
-        const input = document.getElementById('myIdInput');
-        const status = document.getElementById('loginStatus');
-        const val = input.value.trim();
- 
-        if (!/^\d{12}$/.test(val)) {
-            status.style.color = '#ff5470';
-            status.innerText = 'Die ID muss exakt aus 12 Zahlen bestehen!';
-            return;
-        }
- 
-        try {
-            const res = await fetch('/api/register', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ token: myToken, chosenId: val })
-            });
-            const data = await res.json();
- 
-            if (res.ok) {
-                document.getElementById('loginScreen').style.display = 'none';
-                document.getElementById('appShell').style.display = 'block';
-                updateDashboard();
-                loopInterval = setInterval(updateDashboard, 4000);
-            } else {
-                status.style.color = '#ff5470';
-                status.innerText = data.message;
-            }
-        } catch (e) {
-            status.style.color = '#ff5470';
-            status.innerText = 'Server nicht erreichbar.';
-        }
-    }
- 
-    async function updateDashboard() {
-        try {
-            const res = await fetch(`/api/dashboard?token=${myToken}`);
-            if (res.status === 401) {
-                clearInterval(loopInterval);
-                document.getElementById('loginScreen').style.display = 'flex';
-                document.getElementById('appShell').style.display = 'none';
-                return;
-            }
-            const data = await res.json();
- 
-            document.getElementById('myUsername').innerText = data.username;
- 
-            const listContainer = document.getElementById('friendList');
-            if (data.friends.length === 0) {
-                listContainer.innerHTML = '<div class="empty-friends">Noch keine Freunde verbunden.</div>';
-            } else {
-                listContainer.innerHTML = '';
-                data.friends.forEach(f => {
-                    const row = document.createElement('div');
-                    row.className = `friend-row ${activeChatFriend === f ? 'active' : ''}`;
-                    row.onclick = () => openChat(f);
-                    row.innerHTML = `
-                        <div class="avatar" style="background:${idToGradient(f)}">${f.slice(0, 2)}</div>
-                        <div class="friend-meta">
-                            <div class="fid">${f}</div>
-                            <div class="fstatus">Verbunden</div>
-                        </div>`;
-                    listContainer.appendChild(row);
-                });
-            }
- 
-            if (activeChatFriend) {
-                if (!data.friends.includes(activeChatFriend)) {
-                    closeChat();
-                } else {
-                    loadMessages();
-                }
-            }
-        } catch (e) {}
-    }
- 
-    async function addFriend() {
-        const input = document.getElementById('friendInput');
-        const status = document.getElementById('friendAddStatus');
-        const val = input.value.trim();
- 
-        if (!/^\d{12}$/.test(val)) {
-            status.style.color = '#ff5470';
-            status.innerText = 'ID muss aus 12 Zahlen bestehen!';
-            return;
-        }
- 
-        try {
-            const res = await fetch('/api/friends/add', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ token: myToken, friendName: val })
-            });
-            const data = await res.json();
-            status.style.color = res.ok ? '#00ffaa' : '#ff5470';
-            status.innerText = data.message;
-            input.value = '';
-            updateDashboard();
-        } catch (e) {
-            status.style.color = '#ff5470';
-            status.innerText = 'Fehler beim Verbinden.';
-        }
-    }
- 
-    function openChat(friendName) {
-        activeChatFriend = friendName;
-        document.getElementById('emptyState').style.display = 'none';
-        document.getElementById('chatHeader').style.display = 'flex';
-        document.getElementById('chatSection').style.display = 'flex';
-        document.getElementById('chatWithTitle').innerText = friendName;
-        document.getElementById('chatHeaderAvatar').style.background = idToGradient(friendName);
-        document.getElementById('chatHeaderAvatar').innerText = friendName.slice(0, 2);
-        updateDashboard();
-    }
- 
-    function closeChat() {
-        activeChatFriend = null;
-        document.getElementById('emptyState').style.display = 'flex';
-        document.getElementById('chatHeader').style.display = 'none';
-        document.getElementById('chatSection').style.display = 'none';
-    }
- 
-    async function loadMessages() {
-        if (!activeChatFriend) return;
-        try {
-            const res = await fetch(`/api/messages?token=${myToken}&friend=${activeChatFriend}`);
-            const messages = await res.json();
-            const box = document.getElementById('chatBox');
-            box.innerHTML = '';
-            messages.forEach(m => {
-                const div = document.createElement('div');
-                div.className = `msg ${m.fromMe ? 'me' : ''}`;
-                div.innerText = m.text;
-                box.appendChild(div);
-            });
-            box.scrollTop = box.scrollHeight;
-        } catch (e) {}
-    }
- 
-    async function sendMessage() {
-        const input = document.getElementById('msgInput');
-        if (!input.value.trim() || !activeChatFriend) return;
-        try {
-            await fetch('/api/messages/send', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ token: myToken, toFriend: activeChatFriend, text: input.value.trim() })
-            });
-            input.value = '';
-            loadMessages();
-        } catch (e) {}
-    }
- 
-    document.getElementById('msgInput')?.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
-    });
-</script>
- 
-</body>
-</html>
