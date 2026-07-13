@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="de">
 <head>
@@ -164,10 +165,10 @@
         <div class="login-card">
             <h1>Crypto-Box</h1>
             <p class="subtitle">Absolut anonymer Peer-to-Peer Chat.</p>
-            <label>Deine 12-stellige ID</label>
-            <input type="text" id="userIdInput" placeholder="LADEND...">
+            <label>Deine 12-stellige ID eingeben</label>
+            <input type="text" id="userIdInput" maxlength="12" placeholder="z.B. 123456789012">
             <button class="btn-primary" id="loginBtn">Chat-Raum betreten</button>
-            <div class="login-status" id="loginStatus">Verbindung zum Server wird aufgebaut...</div>
+            <div class="login-status" id="loginStatus" style="color:var(--text-muted);">Bereit zum Login</div>
         </div>
     </div>
 
@@ -182,62 +183,144 @@
                 <div class="add-friend-block">
                     <div class="label">Freund hinzufügen</div>
                     <div class="add-friend-row">
-                        <input type="text" id="friendIdInput" placeholder="12-stellige ID">
+                        <input type="text" id="friendIdInput" maxlength="12" placeholder="12-stellige ID">
                         <button id="addFriendBtn">+</button>
                     </div>
                     <div id="friendAddStatus"></div>
-                </div>Aktive Verbindungen
+                </div>
+                Aktive Verbindungen
                 Noch keine Freunde verbunden.
-
                 F
                 Freund
                 Ende-zu-Ende verschlüsselt
-
                 ＋
                 Wähle links einen Freund aus, um euren verschlüsselten Chat zu öffnen.
-
                 Senden
-
-                const BACKEND_URL = window.location.hostname === "localhost" || 
-                window.location.hostname === "127.0.0.1"
-                ? "ws://localhost:5000":
-                "wss://kizzyyyyyy-github-io.onrender.com"; 
-
-                let socket;
-
-                function connectToServer() {
-                    const statusDiv = document.getElementById('loginStatus');
-
-                    // Verbindung aufbauen
-                    socket = new WebSocket(BACKEND_URL);
-
-                    socket.onopen = () => {
-                    console.log("Verbunden mit Server:", BACKEND_URL);
-                    statusDiv.innerText = "Bereit! Klicke auf 'Chat-Raum betreten'.";
-                    statusDiv.style.color = "var(--accent-mint)";
-                    // Hier kannst du automatisch eine ID vom Server anfordern, falls dein Server das macht
-                };
-
-                socket.onerror = (error) => {
-                    console.error("WebSocket Fehler:", error);
-                    statusDiv.innerText = "Fehler: Server nicht erreichbar. Versuche es gleich nochmal.";
-                    statusDiv.style.color = "var(--danger)";
-                };
-
-                socket.onclose = () => {
-                console.log("Verbindung geschlossen.");
-            };
-        }
-
-        window.addEventListener('DOMContentLoaded', connectToServer);
-
-
-        // Einfacher Login-Umschalter für das Interface
-        document.getElementById('loginBtn').addEventListener('click', () => {
+                // HIER DEINE RENDER-URL MIT HTTPS:// EINTRAGEN
+                const BACKEND_URL = window.location.hostname === "localhost" ||
+                 window.location.hostname === "127.0.0.1"
+                 ? "http://localhost:5000
+                 : "onrender.com"; // <-- Tausche das hier mit deiner echten Render-URL aus!
+                 const myToken = localStorage.getItem('chat_token') || 'token_' + 
+                 Math.random().toString(36).substr(2, 9);
+                 localStorage.setItem('chat_token', myToken);
+                 let activeFriend = null;
+                 document.getElementById('loginBtn').addEventListener('click', async () => {
+                const chosenId = document.getElementById('userIdInput').value.trim();
+                const statusDiv = document.getElementById('loginStatus');
+                if (!/^\d{12}$/.test(chosenId)) {
+                statusDiv.innerText = "Fehler: ID muss exakt 12 Zahlen lang sein.";
+                statusDiv.style.color = "var(--danger)";
+                return;
+            }
+            statusDiv.innerText = "Registrierung läuft...";
+            statusDiv.style.color = "var(--text-muted)";
+            try {
+            const response = await fetch(${BACKEND_URL}/api/register, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ token: myToken, chosenId: chosenId })
+        });
+        const data = await response.json();
+        if (data.success) {
         document.getElementById('loginScreen').style.display = 'none';
         document.getElementById('appShell').style.display = 'block';
-        // ID übertragen
-        const inputId = document.getElementById('userIdInput').value || "User-" + 
-        Math.floor(Math.random()*1000);
-        document.getElementById('myIdDisplay').innerText = inputId;
-        });
+        document.getElementById('myIdDisplay').innerText = chosenId;
+        startDashboardPolling();
+    } else {
+    statusDiv.innerText = data.message || "Registrierung fehlgeschlagen.";
+    statusDiv.style.color = "var(--danger)";
+}
+} catch (err) {
+statusDiv.innerText = "Fehler: Server reagiert nicht. Läuft das Backend?";
+statusDiv.style.color = "var(--danger)";
+}
+});
+document.getElementById('addFriendBtn').addEventListener('click', async () => {
+const friendId = document.getElementById('friendIdInput').value.trim();
+const statusDiv = document.getElementById('friendAddStatus');
+try {
+const res = await fetch(${BACKEND_URL}/api/friends/add, {
+method: 'POST',
+headers: { 'Content-Type': 'application/json' },
+body: JSON.stringify({ token: myToken, friendName: friendId })
+});
+const data = await res.json();
+statusDiv.innerText = data.message;
+statusDiv.style.color = res.ok ? "var(--accent-mint)" : "var(--danger)";
+document.getElementById('friendIdInput').value = '';
+updateDashboard();
+} catch (e) {
+statusDiv.innerText = "Fehler beim Hinzufügen.";
+}
+});
+async function updateDashboard() {
+try {
+const res = await fetch(${BACKEND_URL}/api/dashboard?token=${myToken});
+if (!res.ok) return;
+const data = await res.json();
+const listDiv = document.getElementById('friendList');
+if (data.friends.length === 0) {
+listDiv.innerHTML = 'Noch keine Freunde verbunden.';
+return;
+}
+listDiv.innerHTML = '';
+data.friends.forEach(fId => {
+const row = document.createElement('div');
+row.className = friend-row ${activeFriend === fId ? 'active' : ''};
+row.innerHTML = <div class="avatar" style="background:var(--accent-cyan)">${fId.substr(0,2)}</div> <div class="friend-meta"> <div class="fid">${fId}</div> <div class="fstatus" style="color:var(--accent-mint)">Verbunden</div> </div>;
+row.onclick = () => selectFriend(fId);
+listDiv.appendChild(row);
+});
+} catch (e) { console.error("Dashboard-Fehler", e); }
+}
+function selectFriend(fId) {
+activeFriend = fId;
+document.getElementById('emptyState').style.display = 'none';
+document.getElementById('chatHeader').style.display = 'flex';
+document.getElementById('activeFriendId').innerText = fId;
+updateDashboard();
+loadMessages();
+}
+async function loadMessages() {
+if (!activeFriend) return;
+try {
+const res = await fetch(${BACKEND_URL}/api/messages?token=${myToken}&friend=${activeFriend});
+const messages = await res.json();
+const chatBox = document.getElementById('chatBox');
+const wasAtBottom = chatBox.scrollHeight - chatBox.clientHeight <= chatBox.scrollTop + 50;
+chatBox.innerHTML = '';
+messages.forEach(msg => {
+const div = document.createElement('div');
+div.className = msg ${msg.fromMe ? 'me' : ''};
+div.innerText = msg.text;
+chatBox.appendChild(div);
+});
+if (wasAtBottom) chatBox.scrollTop = chatBox.scrollHeight;
+} catch (e) { console.error(e); }
+}
+document.getElementById('sendBtn').addEventListener('click', sendMessage);
+document.getElementById('msgInput').addEventListener('keypress', (e) => { if(e.key === 'Enter') sendMessage(); });
+async function sendMessage() {
+const input = document.getElementById('msgInput');
+const text = input.value.trim();
+if (!text || !activeFriend) return;
+try {
+const res = await fetch(${BACKEND_URL}/api/messages/send, {
+method: 'POST',
+headers: { 'Content-Type': 'application/json' },
+body: JSON.stringify({ token: myToken, toFriend: activeFriend, text: text })
+});
+if (res.ok) {
+input.value = '';
+loadMessages();
+}
+} catch (e) { console.error(e); }
+}
+function startDashboardPolling() {
+updateDashboard();
+setInterval(() => {
+updateDashboard();
+loadMessages();
+}, 3000);
+}
