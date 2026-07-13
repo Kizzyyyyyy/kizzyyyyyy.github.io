@@ -1,3 +1,4 @@
+// HIER DEINE RENDER-URL MIT HTTPS:// EINTRAGEN
 const express = require('express');
 const path = require('path');
 const app = express();
@@ -135,4 +136,8 @@ app.post('/api/messages/send', (req, res) => {
     res.json({ success: true });
 });
 
-app.listen(3000, () => console.log('Server läuft auf https://kizzyyyyyy.github.io')); 
+// Korrigierter Server-Start über Express (app)
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => {
+    console.log(`Server läuft fehlerfrei auf Port ${PORT}`);
+});
